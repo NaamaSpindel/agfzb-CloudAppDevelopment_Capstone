@@ -20,25 +20,24 @@ def contact(request):
         return render(request, 'djangoapp/contact.html', context)
 
 def login_request(request):
-    context = {}
     if request.method == "POST":
         username = request.POST['username']
-        password = request.POST['psw']
+        password = request.POST['password']
         user = authenticate(username=username, password=password)
         if user is not None:
             login(request, user)
-            return redirect('/djangoapp/')
+            return redirect('djangoapp:index')
         else:
-            messages.error(request, 'Invalid username or password.')
-            return render(request, 'djangoapp/user_login.html', context)
+            messages.error(request, 'Invalid username or password. Please try again.')
+            return render(request, 'djangoapp/login.html')
     else:
-        return render(request, 'djangoapp/user_login.html', context)
+        return render(request, 'djangoapp/login.html')
 
 def logout_request(request):
     if request.user.is_authenticated:
         print("Log out the user `{}`".format(request.user.username))
         logout(request)
-    return redirect('/djangoapp')
+    return redirect('djangoapp:index')  # Use the namespace instead of the URL
 
 def registration_request(request):
     context = {}
@@ -46,20 +45,19 @@ def registration_request(request):
         return render(request, 'djangoapp/registration.html', context)
     elif request.method == 'POST':
         username = request.POST['username']
-        password = request.POST['psw']
-        first_name = request.POST['firstname']
-        last_name = request.POST['lastname']
+        password = request.POST['password1']  # Corrected the form field name
+        first_name = request.POST['first_name']
+        last_name = request.POST['last_name']
         user_exist = User.objects.filter(username=username).exists()
         
         if not user_exist:
             user = User.objects.create_user(username=username, first_name=first_name, last_name=last_name,
                                             password=password)
             login(request, user)
-            return redirect("/djangoapp/")
+            return redirect('djangoapp:index')  # Use the namespace instead of the URL
         else:
             messages.error(request, 'Username already exists. Please choose a different one.')
             return render(request, 'djangoapp/registration.html', context)
-
 def get_dealerships(request):
     context = {}
     if request.method == "GET":
