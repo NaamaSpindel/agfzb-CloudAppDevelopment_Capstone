@@ -31,38 +31,7 @@ def get_request(url, **kwargs):
 
 # Create a `post_request` to make HTTP POST requests
 # e.g., response = requests.post(url, params=kwargs, json=payload)
-def post_request(url, json_payload, **kwargs):
-    print(kwargs)
-    print("Payload: ", json_payload, ". Params: ", kwargs)
-    print("POST to {} ".format(url))
-    apikey = kwargs.get("apikey")
-    dealer_id = kwargs.get("id")
-    
-    try:
-        if apikey:
-            params = dict()
-            params["text"] = kwargs.get("text")
-            params["version"] = kwargs.get("version")
-            params["features"] = kwargs.get("features")
-            params["return_analyzed_text"] = kwargs.get("return_analyzed_text")
-            
-            response = requests.post(url + f"?id={dealer_id}", json=json_payload, data=params, auth=HTTPBasicAuth('apikey', apikey), headers={'Content-Type': 'application/json'})
-        else:
-            # Call post method of requests library with URL, JSON payload, and parameters
-            params = kwargs.copy()
-            params.pop("id", None)
-            
-            response = requests.post(url + f"?id={dealer_id}", json=json_payload, headers={'Content-Type': 'application/json'}, params=params)
-        
-        # Check if the response contains valid JSON
-        response.raise_for_status()  # This will raise an exception if the response status code is an HTTP error.
-        status_code = response.status_code
-        print(f"With status {status_code}")
-        json_data = response.json()
-        return json_data
-    except json.JSONDecodeError as e:
-        print(f"Error in post_request: {e}")
-        return None
+
         
 
 # Create a get_dealers_from_cf method to get dealers from a cloud function
@@ -92,4 +61,83 @@ def get_dealers_from_cf(url, **kwargs):
                                    st=dealer_doc["st"], zip=dealer_doc["zip"],  short_name=dealer_doc["short_name"])
             results.append(dealer_obj)
 
+    return results
+
+def get_dealer_by_state(url, dealer_state):
+    # Call get_request with the dealer_id param
+    json_result = get_request(url, dealer_state=dealer_state)
+
+    # Create a CarDealer object from response
+    dealer = json_result[0]
+    dealer_obj = CarDealer(address=dealer["address"], city=dealer["city"], full_name=dealer["full_name"],
+                           id=dealer["id"], lat=dealer["lat"], long=dealer["long"],
+                           short_name=dealer["short_name"],
+                           st=dealer["st"], zip=dealer["zip"])
+    return dealer_obj
+
+# Create a get_dealer_reviews_from_cf method to get reviews by dealer id from a cloud function
+def get_dealer_by_id_from_cf(url, id):
+    result = {}
+    # Call get_request with a URL parameter
+    json_result = get_request(url, id=id)
+    if json_result:
+        # Get the row list in JSON as dealers
+        dealers = json_result
+        #print("dealers :",dealers)  
+        # For each dealer object
+        dealer = dealers[0]
+        print("dealer :",dealer)
+        # Create a CarDealer object with values in `doc` object
+        dealer_obj = CarDealer(address=dealer["address"], city=dealer["city"], full_name=dealer["full_name"],
+                                id=dealer["id"], lat=dealer["lat"], long=dealer["long"],
+                                short_name=dealer["short_name"],
+                                st=dealer["st"], zip=dealer["zip"])
+        result = dealer_obj
+    return result
+
+
+
+def get_dealer_by_id(url, id):
+    # Call get_request with the dealer_id param
+    json_result = get_request(url, dealer_id=id)
+
+    # Create a CarDealer object from response
+    dealer = json_result[0]
+    dealer_obj = CarDealer(address=dealer["address"], city=dealer["city"], full_name=dealer["full_name"],
+                           id=dealer["id"], lat=dealer["lat"], long=dealer["long"],
+                           short_name=dealer["short_name"],
+                           st=dealer["st"], zip=dealer["zip"])
+    return dealer_obj
+
+
+# Create an `analyze_review_sentiments` method to call Watson NLU and analyze text
+# def analyze_review_sentiments(text):
+# - Call get_request() with specified arguments
+# - Get the returned sentiment label such as Positive or Negative
+def get_dealer_reviews_from_cf(url, **kwargs):
+    results = []
+    id = kwargs.get("id")
+    if id:
+        json_result = get_request(url, id=id)
+    else:
+        json_result = get_request(url)
+    print('json_result RESTAPIS', json_result)
+    if json_result:
+        reviews = json_result
+        for dealer_review in reviews:
+            review_obj = DealerReview(
+                dealership=dealer_review.get("dealership"),
+                name=dealer_review.get("name"),
+                purchase=dealer_review.get("purchase"),
+                review=dealer_review.get("review"),
+                purchase_date=dealer_review.get("purchase_date"),
+                car_make=dealer_review.get("car_make"),
+                car_model=dealer_review.get("car_model"),
+                car_year=dealer_review.get("car_year"),
+                sentiment='',
+                id=dealer_review.get("id")
+            )
+            sentiment = analyze_review_sentiments(review_obj.review)
+            review_obj.sentiment = sentiment
+            results.append(review_obj)
     return results

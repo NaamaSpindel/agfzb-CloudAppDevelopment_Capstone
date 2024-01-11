@@ -3,7 +3,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, render, redirect
 from .models import CarModel, CarDealer
-from .restapis import get_dealers_from_cf, post_request
+from .restapis import get_dealers_from_cf, get_request 
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 from datetime import datetime
@@ -67,10 +67,36 @@ def registration_request(request):
 
 def get_dealerships(request):
     if request.method == "GET":
+        context = {}
         url = "https://naamaspindel-3000.theiadockernext-1-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/dealerships/get"
-        # Get dealers from the URL
         dealerships = get_dealers_from_cf(url)
-        # Concat all dealer's short name
-        dealer_names = ' '.join([dealer.short_name for dealer in dealerships])
-        # Return a list of dealer short name
-        return HttpResponse(dealer_names)
+        context["dealership_list"] = dealerships
+       
+        return render(request, 'djangoapp/index.html', context)
+
+def get_dealer_details(request,dealer_id):
+     if request.method == "GET":
+         context = {}
+         dealer_url = "https://naveenascoor-3000.theiadockernext-0-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/dealerships/get"
+         dealer = get_dealer_by_id_from_cf(dealer_url, id = dealer_id)
+         context['dealer'] = dealer
+
+         review_url = "https://naamaspindel-5000.theiadockernext-0-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/api/get_reviews"
+         reviews = get_dealer_reviews_from_cf(review_url, id = dealer_id)
+         context["reviews"] = reviews
+         if not context["reviews"] :
+            messages.warning(request, "There are no reviews at the moment !!!")   
+         return render(request, 'djangoapp/dealer_details.html', context)
+
+
+def get_dealer_details1(request, dealer_id):
+     if request.method == "GET":
+         context = {}
+         dealer_url = "https://naamaspindel-3000.theiadockernext-1-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/dealerships/get"
+         dealer = get_dealer_by_id(dealer_url, id=id)
+         context['dealer'] = dealer
+         if not context["dealer"] :
+            messages.warning(request, "There are no dealer at the moment !!!")   
+         return render(request, 'djangoapp/dealer_details.html', context)
+
+
