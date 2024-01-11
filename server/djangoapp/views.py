@@ -1,8 +1,14 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout, authenticate
+from django.shortcuts import render
+from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404, render, redirect
+from .models import CarModel, CarDealer
+from .restapis import get_dealers_from_cf, post_request
+from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
+from datetime import datetime
 import logging
+import json
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -58,7 +64,13 @@ def registration_request(request):
         else:
             messages.error(request, 'Username already exists. Please choose a different one.')
             return render(request, 'djangoapp/registration.html', context)
+
 def get_dealerships(request):
-    context = {}
     if request.method == "GET":
-        return render(request, 'djangoapp/index.html', context)
+        url = "https://naamaspindel-3000.theiadockernext-1-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/dealerships/get"
+        # Get dealers from the URL
+        dealerships = get_dealers_from_cf(url)
+        # Concat all dealer's short name
+        dealer_names = ' '.join([dealer.short_name for dealer in dealerships])
+        # Return a list of dealer short name
+        return HttpResponse(dealer_names)
