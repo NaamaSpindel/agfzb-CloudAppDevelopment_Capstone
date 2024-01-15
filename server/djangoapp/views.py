@@ -92,7 +92,7 @@ def get_dealer_details(request,dealer_id):
 def get_dealer_details1(request, dealer_id):
      if request.method == "GET":
          context = {}
-         dealer_url = "https://naamaspindel-3000.theiadockernext-1-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/dealerships/get"
+         dealer_url = "https://naamaspindel-3000.theiadockernext-0-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai/dealerships/get"
          dealer = get_dealer_by_id(dealer_url, id=id)
          context['dealer'] = dealer
          if not context["dealer"] :
