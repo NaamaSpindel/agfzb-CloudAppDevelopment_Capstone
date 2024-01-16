@@ -31,7 +31,38 @@ def get_request(url, **kwargs):
 
 # Create a `post_request` to make HTTP POST requests
 # e.g., response = requests.post(url, params=kwargs, json=payload)
-
+def post_request(url, json_payload, **kwargs):
+    print(kwargs)
+    print("Payload: ", json_payload, ". Params: ", kwargs)
+    print("POST to {} ".format(url))
+    apikey = kwargs.get("apikey")
+    dealer_id = kwargs.get("id")
+    
+    try:
+        if apikey:
+            params = dict()
+            params["text"] = kwargs.get("text")
+            params["version"] = kwargs.get("version")
+            params["features"] = kwargs.get("features")
+            params["return_analyzed_text"] = kwargs.get("return_analyzed_text")
+            
+            response = requests.post(url + f"?id={dealer_id}", json=json_payload, data=params, auth=HTTPBasicAuth('apikey', apikey), headers={'Content-Type': 'application/json'})
+        else:
+            # Call post method of requests library with URL, JSON payload, and parameters
+            params = kwargs.copy()
+            params.pop("id", None)
+            
+            response = requests.post(url + f"?id={dealer_id}", json=json_payload, headers={'Content-Type': 'application/json'}, params=params)
+        
+        # Check if the response contains valid JSON
+        response.raise_for_status()  # This will raise an exception if the response status code is an HTTP error.
+        status_code = response.status_code
+        print(f"With status {status_code}")
+        json_data = response.json()
+        return json_data
+    except json.JSONDecodeError as e:
+        print(f"Error in post_request: {e}")
+        return None
         
 
 # Create a get_dealers_from_cf method to get dealers from a cloud function
@@ -141,3 +172,16 @@ def get_dealer_reviews_from_cf(url, **kwargs):
             review_obj.sentiment = sentiment
             results.append(review_obj)
     return results
+
+def analyze_review_sentiments(text):
+    url = "https://3438e8c5-0ba5-4549-b32f-bcf89602b095-bluemix.cloudantnosqldb.appdomain.cloud"
+    api_key = "4A607hy1ZioVXcO5qfCwg-XdIfdG7Oak-5peC0pgoTHC"
+    authenticator = IAMAuthenticator(api_key)
+    natural_language_understanding = NaturalLanguageUnderstandingV1(version='2021-08-01',authenticator=authenticator)
+    natural_language_understanding.set_service_url(url)
+    response = natural_language_understanding.analyze( text=text+"hello hello hello",features=Features(sentiment=SentimentOptions(targets=[text+"hello hello hello"]))).get_result()
+    label=json.dumps(response, indent=2)
+    label = response['sentiment']['document']['label']
+    
+    
+    return(label)
