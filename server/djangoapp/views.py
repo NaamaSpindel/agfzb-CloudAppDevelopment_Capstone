@@ -130,7 +130,7 @@ def add_review(request, id):
                 "review": request.POST.get("content"),
                 "purchase_date": request.POST.get("purchasedate"),
                 "car_make": car.car_make.name,
-                "car_model": car.name
+                "car_model": car.name,
                 "car_year": int(car.year.strftime("%Y")),
                 "id": id,
                 "time": datetime.utcnow().isoformat()
