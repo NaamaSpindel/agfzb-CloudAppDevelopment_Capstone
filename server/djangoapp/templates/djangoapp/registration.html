@@ -8,7 +8,7 @@
 <body>
     <div class="container mt-5">
         <h2>Sign Up</h2>
-        <form method="post" action="{% url 'djangoapp:signup' %}" class="needs-validation" novalidate>
+        <form method="post" action="{% url 'djangoapp:registration' %}" class="needs-validation" novalidate>
             {% csrf_token %}
             <div class="form-group">
                 <label for="first_name">First Name:</label>
